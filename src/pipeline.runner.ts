@@ -122,7 +122,8 @@ export class PipelineRunner {
 
             buildResult = await buildApi.getBuild(projectName, buildQueueResult.id);
             core.debug(`Build Status = "${BuildInterfaces.BuildStatus[buildResult.status]}"`);
-        } while (buildResult.status == BuildInterfaces.BuildStatus.InProgress);
+        } while (buildResult.status == BuildInterfaces.BuildStatus.NotStarted
+            || buildResult.status == BuildInterfaces.BuildStatus.InProgress);
 
         log.LogInfo(`Build Status = "${BuildInterfaces.BuildStatus[buildResult.status]}"`);
         log.LogInfo(`Build Result = "${BuildInterfaces.BuildResult[buildResult.result]}"`);
