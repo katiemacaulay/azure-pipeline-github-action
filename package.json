@@ -13,10 +13,13 @@
     "azure-devops-node-api": "11.0.1",
     "jest": "^26.0.1",
     "@types/jest": "^25.2.2",
-    "ts-jest": "^25.5.1"
+    "rimraf": "~2.6.2",
+    "ts-loader": "~5.2.2",
+    "webpack": "^5.23.0",
+    "webpack-cli": "^4.5.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rimraf ./lib && webpack --config ./webpack.config.js --mode production",
     "test": "jest",
     "test-coverage": "jest --coverage"
   },
