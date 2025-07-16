@@ -20,6 +20,16 @@ export class PipelineRunner {
         this.taskParameters = taskParameters
     }
 
+    private getGithubBranchName(): string {
+        // GITHUB_REF comes in format like "refs/heads/main" or "refs/heads/feature-branch"
+        // We need to extract just the branch name
+        if (this.branch && this.branch.startsWith('refs/heads/')) {
+            return this.branch.replace('refs/heads/', '');
+        }
+        // Fallback for other ref types or if format is unexpected
+        return this.branch;
+    }
+
     public async start(): Promise<any> {
         try {
             var taskParams = TaskParameters.getTaskParams();
@@ -76,8 +86,13 @@ export class PipelineRunner {
         // If definition is linked to existing github repo, pass github source branch and source version to build
         if (p.equals(repositoryId, this.repository) && p.equals(repositoryType, this.githubRepo)) {
             core.debug("pipeline is linked to same Github repo");
-            sourceBranch = this.branch,
-                sourceVersion = this.commitId
+            // Use custom branch if provided, otherwise use current GitHub branch
+            let targetBranch = this.taskParameters.azurePipelineBranch || this.getGithubBranchName();
+            core.debug(`Using target branch: ${targetBranch}`);
+            core.debug(`Custom branch input: ${this.taskParameters.azurePipelineBranch}`);
+            core.debug(`GitHub ref: ${this.branch}`);
+            sourceBranch = targetBranch;
+            sourceVersion = this.commitId;
         } else {
             core.debug("pipeline is not linked to same Github repo");
         }
@@ -173,12 +188,17 @@ export class PipelineRunner {
             core.debug("Pipeline is linked to GitHub artifact. Looking for now matching repository");
             gitHubArtifacts.forEach(gitHubArtifact => {
                 if (gitHubArtifact.definitionReference != null && p.equals(gitHubArtifact.definitionReference.definition.name, this.repository)) {
+                    // Use custom branch if provided, otherwise use current GitHub branch
+                    let targetBranch = this.taskParameters.azurePipelineBranch || this.getGithubBranchName();
+                    core.debug(`Using target branch: ${targetBranch}`);
+                    core.debug(`Custom branch input: ${this.taskParameters.azurePipelineBranch}`);
+                    core.debug(`GitHub ref: ${this.branch}`);
                     // Add version information for matching GitHub artifact
                     let artifactMetadata = <ReleaseInterfaces.ArtifactMetadata>{
                         alias: gitHubArtifact.alias,
                         instanceReference: <ReleaseInterfaces.BuildVersion>{
                             id: this.commitId,
-                            sourceBranch: this.branch,
+                            sourceBranch: targetBranch,
                             sourceRepositoryType: this.githubRepo,
                             sourceRepositoryId: this.repository,
                             sourceVersion: this.commitId
