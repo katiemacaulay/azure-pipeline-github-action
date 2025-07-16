@@ -121,6 +121,13 @@ export class PipelineRunner {
             core.debug(`GitHub ref: ${this.branch}`);
             sourceBranch = targetBranch;
             sourceVersion = this.commitId;
+        } else if (this.taskParameters.azurePipelineBranch) {
+            // If custom branch is specified but repo doesn't match, still try to use the custom branch
+            core.info("Pipeline is not linked to same Github repo, but custom branch specified");
+            let targetBranch = this.formatBranchForAzureDevOps(this.taskParameters.azurePipelineBranch);
+            core.info(`Using custom branch for non-GitHub pipeline: ${targetBranch}`);
+            sourceBranch = targetBranch;
+            // Don't set sourceVersion for non-GitHub repos as it may not be compatible
         } else {
             core.debug("pipeline is not linked to same Github repo");
         }
