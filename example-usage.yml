@@ -1,0 +1,22 @@
+# Example usage of the enhanced azure-pipeline-github-action
+
+name: Test Azure Pipeline Trigger
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to execute Azure pipeline on'
+        required: false
+        default: 'main'
+
+jobs:
+  trigger-azure-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Azure Pipeline with Custom Branch
+        uses: yourusername/azure-pipeline-github-action@main
+        with:
+          azure-devops-project-url: 'https://dev.azure.com/yourorg/yourproject'
+          azure-pipeline-name: 'your-pipeline-name'
+          azure-devops-token: ${{ secrets.AZURE_DEVOPS_TOKEN }}
+          azure-pipeline-branch: ${{ github.event.inputs.target_branch }}

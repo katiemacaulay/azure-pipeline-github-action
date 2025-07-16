@@ -30,9 +30,26 @@ export class PipelineRunner {
         return this.branch;
     }
 
+    private formatBranchForAzureDevOps(branchName: string): string {
+        // Azure DevOps expects branch in refs/heads/branch-name format
+        if (branchName && !branchName.startsWith('refs/heads/')) {
+            return `refs/heads/${branchName}`;
+        }
+        return branchName;
+    }
+
     public async start(): Promise<any> {
         try {
             var taskParams = TaskParameters.getTaskParams();
+            
+            // Debug branch parameter values
+            core.info(`=== Branch Debug Info ===`);
+            core.info(`Input azure-pipeline-branch: "${this.taskParameters.azurePipelineBranch}"`);
+            core.info(`GitHub GITHUB_REF: "${this.branch}"`);
+            core.info(`GitHub repository: "${this.repository}"`);
+            core.info(`Extracted GitHub branch: "${this.getGithubBranchName()}"`);
+            core.info(`========================`);
+            
             let authHandler = azdev.getPersonalAccessTokenHandler(taskParams.azureDevopsToken);
             let collectionUrl = UrlParser.GetCollectionUrlBase(this.taskParameters.azureDevopsProjectUrl);
             core.info(`Creating connection with Azure DevOps service : "${collectionUrl}"`)
@@ -87,9 +104,10 @@ export class PipelineRunner {
         if (p.equals(repositoryId, this.repository) && p.equals(repositoryType, this.githubRepo)) {
             core.debug("pipeline is linked to same Github repo");
             // Use custom branch if provided, otherwise use current GitHub branch
-            let targetBranch = this.taskParameters.azurePipelineBranch || this.getGithubBranchName();
-            core.debug(`Using target branch: ${targetBranch}`);
-            core.debug(`Custom branch input: ${this.taskParameters.azurePipelineBranch}`);
+            let targetBranchName = this.taskParameters.azurePipelineBranch || this.getGithubBranchName();
+            let targetBranch = this.formatBranchForAzureDevOps(targetBranchName);
+            core.info(`Final target branch for Azure DevOps: ${targetBranch}`);
+            core.debug(`Original branch input: ${this.taskParameters.azurePipelineBranch}`);
             core.debug(`GitHub ref: ${this.branch}`);
             sourceBranch = targetBranch;
             sourceVersion = this.commitId;
@@ -189,9 +207,10 @@ export class PipelineRunner {
             gitHubArtifacts.forEach(gitHubArtifact => {
                 if (gitHubArtifact.definitionReference != null && p.equals(gitHubArtifact.definitionReference.definition.name, this.repository)) {
                     // Use custom branch if provided, otherwise use current GitHub branch
-                    let targetBranch = this.taskParameters.azurePipelineBranch || this.getGithubBranchName();
-                    core.debug(`Using target branch: ${targetBranch}`);
-                    core.debug(`Custom branch input: ${this.taskParameters.azurePipelineBranch}`);
+                    let targetBranchName = this.taskParameters.azurePipelineBranch || this.getGithubBranchName();
+                    let targetBranch = this.formatBranchForAzureDevOps(targetBranchName);
+                    core.info(`Final target branch for Azure DevOps: ${targetBranch}`);
+                    core.debug(`Original branch input: ${this.taskParameters.azurePipelineBranch}`);
                     core.debug(`GitHub ref: ${this.branch}`);
                     // Add version information for matching GitHub artifact
                     let artifactMetadata = <ReleaseInterfaces.ArtifactMetadata>{

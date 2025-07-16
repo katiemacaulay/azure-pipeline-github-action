@@ -220,7 +220,7 @@ describe('Testing all functions of class PipelineRunner', () => {
     test('start() - set core failed in RunYamlPipeline if result has errors', async () => {
         jest.spyOn(core, 'getInput').mockImplementation((input, options) => {
             process.env['GITHUB_REPOSITORY'] = 'repo_name';
-            process.env['GITHUB_REF'] = 'releases';
+            process.env['GITHUB_REF'] = 'refs/heads/releases';
             process.env['GITHUB_SHA'] = 'sampleSha';
 
             if (input == 'azure-devops-project-url') return 'https://dev.azure.com/organization/my-project';
@@ -259,7 +259,7 @@ describe('Testing all functions of class PipelineRunner', () => {
                 id: 'my-project',
             },
             reason: 1967,
-            sourceBranch: 'releases',
+            sourceBranch: 'refs/heads/releases',
             sourceVersion: 'sampleSha',
         }
         expect(mockQueueBuild).toBeCalledWith(expectedBuild, 'my-project', true);
