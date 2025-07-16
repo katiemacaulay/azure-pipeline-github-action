@@ -259,8 +259,12 @@ describe('Testing all functions of class PipelineRunner', () => {
                 id: 'my-project',
             },
             reason: 1967,
-            sourceBranch: 'refs/heads/releases',
+            sourceBranch: 'releases',
             sourceVersion: 'sampleSha',
+            repository: {
+                id: 'repo_name',
+                type: 'Github'
+            }
         }
         expect(mockQueueBuild).toBeCalledWith(expectedBuild, 'my-project', true);
         expect(core.setFailed).toBeCalled();

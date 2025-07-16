@@ -31,9 +31,9 @@ export class PipelineRunner {
     }
 
     private formatBranchForAzureDevOps(branchName: string): string {
-        // Azure DevOps expects branch in refs/heads/branch-name format
-        if (branchName && !branchName.startsWith('refs/heads/')) {
-            return `refs/heads/${branchName}`;
+        // Try without refs/heads/ prefix first - some Azure DevOps configurations prefer this
+        if (branchName && branchName.startsWith('refs/heads/')) {
+            return branchName.replace('refs/heads/', '');
         }
         return branchName;
     }
@@ -100,6 +100,16 @@ export class PipelineRunner {
         let sourceBranch = null;
         let sourceVersion = null;
 
+        // Debug repository matching
+        core.info(`=== Repository Matching Debug ===`);
+        core.info(`Pipeline repository ID: "${repositoryId}"`);
+        core.info(`GitHub repository: "${this.repository}"`);
+        core.info(`Pipeline repository type: "${repositoryType}"`);
+        core.info(`Expected type: "${this.githubRepo}"`);
+        core.info(`Repository ID match: ${p.equals(repositoryId, this.repository)}`);
+        core.info(`Repository type match: ${p.equals(repositoryType, this.githubRepo)}`);
+        core.info(`================================`);
+
         // If definition is linked to existing github repo, pass github source branch and source version to build
         if (p.equals(repositoryId, this.repository) && p.equals(repositoryType, this.githubRepo)) {
             core.debug("pipeline is linked to same Github repo");
@@ -125,8 +135,23 @@ export class PipelineRunner {
             sourceBranch: sourceBranch,
             sourceVersion: sourceVersion,
             reason: BuildInterfaces.BuildReason.Triggered,
-            parameters: this.taskParameters.azurePipelineVariables
+            parameters: this.taskParameters.azurePipelineVariables,
+            // Explicitly set repository information to ensure branch is respected
+            repository: sourceBranch ? {
+                id: repositoryId,
+                type: repositoryType
+            } : undefined
         } as BuildInterfaces.Build;
+
+        // Debug the complete build object being sent
+        core.info(`=== Build Object Debug ===`);
+        core.info(`Definition ID: ${build.definition.id}`);
+        core.info(`Project ID: ${build.project.id}`);
+        core.info(`Source Branch: "${build.sourceBranch}"`);
+        core.info(`Source Version: "${build.sourceVersion}"`);
+        core.info(`Reason: ${build.reason}`);
+        core.info(`Parameters: ${build.parameters || 'undefined'}`);
+        core.info(`========================`);
 
         log.LogPipelineTriggerInput(build);
 
